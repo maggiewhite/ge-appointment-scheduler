@@ -3,10 +3,10 @@
     "logfile": "",
      
     "email_from": "",
-    "email_to": [],
+    "email_to": [""],
      
     "username": "", 
     "password": "",
     "enrollment_location_id": "",
-    "init_url": "https://goes-app.cbp.dhs.gov/main/goes",
+    "init_url": "https://goes-app.cbp.dhs.gov/main/goes"
 }
