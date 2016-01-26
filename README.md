@@ -2,13 +2,12 @@
 
 This allows you to check and set up notifications for Global Entry enrollment appointment cancellations through the [Global Online Enrollment System website](https://goes-app.cbp.dhs.gov/). It uses [PhantomJS](http://phantomjs.org/), a headless browser, to log in and report back the first available open appointment. If one is found sooner than your current appointment, it will notify you by email. It **does not** make any changes to your account or your appointment.
 
-Once setup, you can retrieve the soonest available appointment day with the following command:
+Once setup, you can check to see if there is a sooner one than already scheduled with the following commands:
 
 	phantomjs [--ssl-protocol=any] ge-cancellation-checker.phantom.js [-v | --verbose]
+	// ./ge-checker-cron.py  // CURRENTLY NOT FUNCTIONAL
 
-Similarly, if you only want to check to see if there is a sooner one than already scheduled, run:
-
-	./ge-checker-cron.py
+You can also schedule appointments by adding [-s | --schedule] to either command. NOTE: The phantom.js command will only write to a log file/the console. It will not notify you via email that your appointment has been updated.
 
 (Note that this will send an email notification to the address in your `config.json` if a new appointment is found.)
 
@@ -29,8 +28,6 @@ The following must be installed and available in your `$PATH`:
 ### Configuration ###
 
 To get started, copy `config.json.example` to `config.json`. In your new config, fill out the following settings:
-
-* **current_interview_date_str**: your currently scheduled interview date, in English (e.g., "September 19, 2015"). **Reminder:** This must be updated every time you reschedule your appointment.
 
 * **logfile**: (optional) the full path to a logfile to be used by `ge-checker-cron.py`. New cancellations, unsuccessful checks, and errors are logged in this file, if provided.
 
