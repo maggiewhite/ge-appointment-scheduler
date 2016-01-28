@@ -3,7 +3,13 @@ var fs = require('fs');
 
 var schedule = false,
     loadInProgress = false,
-    verbose = false;
+    verbose = false,
+    curDate,
+    newDate,
+    python = false,
+    debug = false,
+    earlierApptAvail = false;
+
 // XXX: send text/email notifications when rescheduling
 // XXX: accept arguments to automatically recheck
 // Calculate path of this file
@@ -11,6 +17,7 @@ var schedule = false,
 system.args.forEach(function(val, i) {
     if (val == '-s' || val == '--schedule') { schedule = true; }
     if (val == '-v' || val == '--verbose') { verbose = true; }
+    if (val == '-p' || val == '--python') { python = true; }
 });
 
 // Read settings from JSON
@@ -19,6 +26,7 @@ try {
     if (!settings.logfile)
         console.log('No logfile specified. Please specify logfile in' +
                 'config.json');
+    // Confirm JSON is loaded. Is this and python checks really necessary?
     if (!settings.username || !settings.password || !settings.init_url || !settings.enrollment_location_id) {
         console.log('Missing username, password, enrollment location ID, and/or initial URL. Exiting...');
         phantom.exit();
@@ -33,6 +41,7 @@ catch(e) {
 try {
     var logfile = fs.open(fs.absolute(settings.logfile), 'a');
     phantom.aboutToExit.connect(logfile.flush);
+    phantom.aboutToExit.connect(logfile.close);
     logfile.writeLine(Date().toString() + ' GOES APPOINTMENT CHECKER');
     logfile.flush();
 }
@@ -41,10 +50,22 @@ catch(e) {
 }
 
 // Write to log
-function log(msg) {
+function log(msg, pri) {
+    // XXX: pretty sure this will fail if log file doesn't open correctly
     logfile.writeLine(Date().toString() + ' ' + msg);
-    if (verbose) { console.log(msg); }
+    if (verbose || pri) { console.log(msg); }
     logfile.flush();
+}
+
+function pythonlog() {
+    if (python) {
+        console.log(curDate);
+        if (earlierApptAvail==true)
+            console.log("Earlier appt available");
+        else
+            console.log("Earlier appt unavailable");
+        console.log(newDate); 
+    }
 }
 
 // Open and set up page
@@ -64,18 +85,19 @@ page.onCallback = function(query, msg) {
     if (query == 'password') { return settings.password; }
     if (query == 'enrollment_location_id') {
         return settings.enrollment_location_id.toString(); }
-    if (query == 'schedule') { return schedule; }
+    if (query == 'schedule') {
+        return schedule; }
     if (query == 'curDate') {
         if (msg) { curDate = msg; return; }
         else { return curDate; }
     }
+    if (query == 'newDate') { newDate = msg; }
     if (query == 'earlierApptAvail') {
-        if (msg) { earlierApptAvail = true; return; }
-        else { return earlierApptAvail; }
-    }
-    if (query == 'report-interview-time') {
-        log('Next available appointment is at: ' + msg);
-        return;
+        if (msg) {
+            earlierApptAvail = true;
+            return; }
+        else {
+            return earlierApptAvail; }
     }
     if (query == 'fatal-error') {
         log('Fatal error: ' + msg);
@@ -104,56 +126,60 @@ function() { // Login
             document.querySelector('a[href="/main/goes/HomePagePreAction.do"]').click();
         });
     },
-    function() { // Read new
+    function() { // Appointment management button
         page.evaluate(function() {
             console.log('Entering appointment management...');
             document.querySelector('.bluebutton[name=manageAptm]').click();
         });
     },
-    function() {
+    function() { // Collect current date
         page.evaluate(function() {
-            console.log('Entering rescheduling selection page...');
             // Current date XXX: clean up this search
             date = document.querySelector(".maincontainer p:nth-child(7)").innerHTML.replace(/<strong>[\s\S]*?<\/strong>/, "");
             window.callPhantom('curDate', date);
+            console.log('Current date found: ' + date);
             document.querySelector('input[name=reschedule]').click();
         });
     },
-    function() {
+    function() { // Select enrollment center
         page.evaluate(function() {
-                console.log('Selecting enrollment center...');
+                console.log('Selecting enrollment center ' + window.callPhantom('enrollment_location_id'));
                 document.querySelector('select[name=selectedEnrollmentCenter]').value = window.callPhantom('enrollment_location_id');
                 document.querySelector('input[name=next]').click();
                 });
     },
-    function() {
+    function() { // Check next available appointment
         page.evaluate(function() {
             console.log('Checking for earlier appointment...');
             // We made it! Now we have to scrape the page for the earliest available date
 
             var date = document.querySelector('.date table tr:first-child td:first-child').innerHTML;
             var month_year = document.querySelector('.date table tr:last-child td:last-child div').innerHTML;
-            var futDate = month_year.replace(',', ' ' + date + ',');
+            var newDate = month_year.replace(',', ' ' + date + ',');
+            console.log('Next date is ' + newDate);
+            window.callPhantom('newDate', newDate);
             var curDate = window.callPhantom('curDate');
-            var schedule = window.callPhantom('schedule');
-            if(Date.parse(futDate).valueOf() < Date.parse(curDate).valueOf()) {
+            if(Date.parse(newDate).valueOf() < Date.parse(curDate).valueOf()) {
                 window.callPhantom('earlierApptAvail', true);
-                console.log('Sooner appt available: ' + futDate);
+                // XXX: format this for python script
+                console.log('Earlier appt available on ' + newDate);
+                var schedule = window.callPhantom('schedule');
                 if (schedule) {
                     document.querySelector('a[href="#"].entry').onmouseup();
                 }
             }
         });
     },
-    function() {
-        if( window.callPhantom('earlierApptAvail') && schedule ) {
+    function() { // Confirm scheduling appointment
+        pythonlog();
+        if( earlierApptAvail && schedule ) {
             page.evaluate( function() {
                 console.log('Scheduling earlier appointment');
                 document.querySelector('input[name=comments]').value = "Earlier appointment";
                 document.querySelector('input[name=Confirm]').click();
             });
         }
-    }
+    } // XXX: confirm appointment scheduled. can't do this without losing my appointment
 ];
 
 var i = 0;
@@ -162,9 +188,6 @@ interval = setInterval(function() {
     if (typeof steps[i] != "function") {
         return phantom.exit();
     }
-    var curDate;
-    var earlierApptAvail = false;
     steps[i]();
     i++;
-
 }, 100);
