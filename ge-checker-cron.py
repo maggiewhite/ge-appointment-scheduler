@@ -11,8 +11,11 @@ from getopt import getopt
 from argparse import ArgumentParser
 from time import sleep
 
+flags = {}
+
 def log(msg):
-    print msg
+    if flags.verbose:
+        print msg
 
     if not 'logfile' in settings or not settings['logfile']: return
     with open(settings['logfile'], 'a') as logfile:
@@ -52,6 +55,7 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('-s', '--schedule', action='store_true')
     parser.add_argument('-r', '--repeat', action='store_true')
+    parser.add_argument('-v', '--verbose', action='store_true')
     flags = parser.parse_args()
 
     # Get settings
@@ -82,6 +86,6 @@ if __name__ == '__main__':
         if (not available):
             log('No new appointments. Next available on %s (current is on %s)' % (newDate, curDate))
             if (not flags.repeat):
-                exit(0)
+                sys.exit(0)
             sleep(settings['period']*60)
     send_apt_available_email(curDate, newDate, flags.schedule)
