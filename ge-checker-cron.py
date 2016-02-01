@@ -9,6 +9,7 @@ import sys, smtplib, json
 from cStringIO import StringIO
 from getopt import getopt
 from argparse import ArgumentParser
+from time import sleep
 
 def log(msg):
     print msg
@@ -50,6 +51,7 @@ if __name__ == '__main__':
     PWD = getcwd()
     parser = ArgumentParser()
     parser.add_argument('-s', '--schedule', action='store_true')
+    parser.add_argument('-r', '--repeat', action='store_true')
     flags = parser.parse_args()
 
     # Get settings
@@ -66,16 +68,20 @@ if __name__ == '__main__':
         print 'Missing to address in config'
         sys.exit()
 
+    available = False
     cmd = ['phantomjs', '%s/ge-cancellation-checker.phantom.js' % PWD, '-p'];
     if (flags.schedule):
         cmd.append('-s')
-    new_apt_str = check_output(cmd); # get string from PhantomJS script - formatted like 'Jul 20, 2015\Earlier appt available\nJuly 22, 2015'
-    aptStream = StringIO(new_apt_str)
-    curDate = datetime.strptime(aptStream.readline().strip(), '%b %d, %Y')
-    available = (aptStream.readline().strip() == 'Earlier appt available')
-    newDate = datetime.strptime(aptStream.readline().strip(), '%B %d, %Y')
-    new_apt_str = new_apt_str.strip()
-    if (available):
-        send_apt_available_email(curDate, newDate, flags.schedule)
-    else:
-        log('No new appointments. Next available on %s (current is on %s)' % (newDate, curDate))
+    while not available:
+        new_apt_str = check_output(cmd); # get string from PhantomJS script - formatted like 'Jul 20, 2015\Earlier appt available\nJuly 22, 2015'
+        aptStream = StringIO(new_apt_str)
+        curDate = datetime.strptime(aptStream.readline().strip(), '%b %d, %Y %H:%M')
+        available = (aptStream.readline().strip() == 'Earlier appt available')
+        newDate = datetime.strptime(aptStream.readline().strip(), '%B %d, %Y %H:%M')
+        new_apt_str = new_apt_str.strip()
+        if (not available):
+            log('No new appointments. Next available on %s (current is on %s)' % (newDate, curDate))
+            if (not flags.repeat):
+                exit(0)
+            sleep(settings['period']*60)
+    send_apt_available_email(curDate, newDate, flags.schedule)

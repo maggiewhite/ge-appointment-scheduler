@@ -136,6 +136,7 @@ function() { // Login
         page.evaluate(function() {
             // Current date XXX: clean up this search
             date = document.querySelector(".maincontainer p:nth-child(7)").innerHTML.replace(/<strong>[\s\S]*?<\/strong>/, "");
+            date += " " + document.querySelector(".maincontainer p:nth-child(8)").innerHTML.replace(/<strong>[\s\S]*?<\/strong>/, "");
             window.callPhantom('curDate', date);
             console.log('Current date found: ' + date);
             document.querySelector('input[name=reschedule]').click();
@@ -156,6 +157,7 @@ function() { // Login
             var date = document.querySelector('.date table tr:first-child td:first-child').innerHTML;
             var month_year = document.querySelector('.date table tr:last-child td:last-child div').innerHTML;
             var newDate = month_year.replace(',', ' ' + date + ',');
+            newDate += " " + document.querySelector('a[href="#"].entry span').innerHTML;
             console.log('Next date is ' + newDate);
             window.callPhantom('newDate', newDate);
             var curDate = window.callPhantom('curDate');

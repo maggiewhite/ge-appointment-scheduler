@@ -3,7 +3,8 @@
      
     "email_from": "",
     "email_to": [""],
-     
+    "period": 30,
+
     "username": "", 
     "password": "",
     "enrollment_location_id": "",
