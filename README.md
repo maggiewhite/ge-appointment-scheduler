@@ -11,7 +11,7 @@ You can also schedule appointments by adding [-s | --schedule] to either command
 
 ## Setup ##
 
-Please be aware that you must first sign up and schedule an enrollment appointment via the [GOES website](https://goes-app.cbp.dhs.gov/) before using this script. Note that because this navigates the GOES website like any other browser ane updates to the GOES website may break it.
+Please be aware that you must first sign up and schedule an enrollment appointment via the [GOES website](https://goes-app.cbp.dhs.gov/) before using this script. Note that because this navigates the GOES website like any other browser any updates to the GOES website may break it.
 
 ### Dependencies ###
 
