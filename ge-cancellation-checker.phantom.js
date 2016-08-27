@@ -8,6 +8,7 @@ var schedule = false,
     newDate,
     python = false,
     debug = false,
+    error = false,
     earlierApptAvail = false;
 
 // XXX: send text/email notifications when rescheduling
@@ -110,50 +111,81 @@ page.onLoadStarted = function() { loadInProgress = true; };
 page.onLoadFinished = function() { loadInProgress = false; };
 
 var steps = [
-function() { // Login
-    page.evaluate(function() {
-        console.log('Logging in...');
-        document.querySelector('input[name=username]').value =
-        window.callPhantom('username');
-        document.querySelector('input[name=password]').value =
-        window.callPhantom('password');
-        document.querySelector('input[name="Sign In"]').click();
-    });
-},
+    function() { // Login
+        page.evaluate(function() {
+            console.log('Logging in...');
+            try {
+                document.querySelector('input[name=j_username]').value =
+                window.callPhantom('username');
+                document.querySelector('input[name=j_password]').value =
+                window.callPhantom('password');
+                document.querySelector('input[name="Sign In"]').click();
+            }
+            catch (err) {
+                console.log(err);
+                error = true;
+            }
+        });
+    },
     function() { // Accept terms of agreement
         page.evaluate(function() {
             console.log('Accepting terms...');
-            document.querySelector('a[href="/main/goes/HomePagePreAction.do"]').click();
+            try {
+            document.querySelector('input[name=checkMe]').click();
+            }
+            catch (err) {
+                console.log(err);
+                error = true;
+            }
         });
     },
     function() { // Appointment management button
         page.evaluate(function() {
             console.log('Entering appointment management...');
-            document.querySelector('.bluebutton[name=manageAptm]').click();
+            try {
+                document.querySelector('.bluebutton[name=manageAptm]').click();
+            }
+            catch (err) {
+                console.log(err);
+                error = true;
+            }
         });
     },
     function() { // Collect current date
         page.evaluate(function() {
             // Current date XXX: clean up this search
+            console.log("Get the earliest reschedule date...");
+            try {
             date = document.querySelector(".maincontainer p:nth-child(7)").innerHTML.replace(/<strong>[\s\S]*?<\/strong>/, "");
             date += " " + document.querySelector(".maincontainer p:nth-child(8)").innerHTML.replace(/<strong>[\s\S]*?<\/strong>/, "");
             window.callPhantom('curDate', date);
             console.log('Current date found: ' + date);
             document.querySelector('input[name=reschedule]').click();
+            }
+            catch (err) {
+                console.log(err);
+                error = true;
+            }
         });
     },
     function() { // Select enrollment center
         page.evaluate(function() {
                 console.log('Selecting enrollment center ' + window.callPhantom('enrollment_location_id'));
+                try {
                 document.querySelector('select[name=selectedEnrollmentCenter]').value = window.callPhantom('enrollment_location_id');
                 document.querySelector('input[name=next]').click();
+                }
+                catch (err) {
+                    console.log(err);
+                    error = true;
+                }
                 });
     },
     function() { // Check next available appointment
         page.evaluate(function() {
             console.log('Checking for earlier appointment...');
             // We made it! Now we have to scrape the page for the earliest available date
-
+            try {
             var date = document.querySelector('.date table tr:first-child td:first-child').innerHTML;
             var month_year = document.querySelector('.date table tr:last-child td:last-child div').innerHTML;
             var newDate = month_year.replace(',', ' ' + date + ',');
@@ -169,6 +201,10 @@ function() { // Login
                 if (schedule) {
                     document.querySelector('a[href="#"].entry').onmouseup();
                 }
+            }}
+            catch (err) {
+                console.log(err);
+                error = true;
             }
         });
     },
@@ -176,9 +212,15 @@ function() { // Login
         pythonlog();
         if( earlierApptAvail && schedule ) {
             page.evaluate( function() {
+                try {
                 console.log('Scheduling earlier appointment');
                 document.querySelector('input[name=comments]').value = "Earlier appointment";
                 document.querySelector('input[name=Confirm]').click();
+                }
+                catch (err) {
+                    console.log(err);
+                    error = true;
+                }
             });
         }
     } // XXX: confirm appointment scheduled. can't do this without losing my appointment
@@ -191,5 +233,9 @@ interval = setInterval(function() {
         return phantom.exit();
     }
     steps[i]();
+    if (error) {
+        phantom.exit();
+        clearInterval(interval);
+    }
     i++;
 }, 100);

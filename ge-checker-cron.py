@@ -83,6 +83,7 @@ if __name__ == '__main__':
         available = (aptStream.readline().strip() == 'Earlier appt available')
         newDate = datetime.strptime(aptStream.readline().strip(), '%B %d, %Y %H:%M')
         new_apt_str = new_apt_str.strip()
+        aptStream.close()
         if (not available):
             log('No new appointments. Next available on %s (current is on %s)' % (newDate, curDate))
             if (not flags.repeat):
