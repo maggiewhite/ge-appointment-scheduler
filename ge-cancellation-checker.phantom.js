@@ -199,7 +199,7 @@ var steps = [
                 console.log('Earlier appt available on ' + newDate);
                 var schedule = window.callPhantom('schedule');
                 if (schedule) {
-                    document.querySelector('a[href="#"].entry').onmouseup();
+                    document.querySelector('a[href="#"].entry').onclick();
                 }
             }}
             catch (err) {
@@ -214,7 +214,7 @@ var steps = [
             page.evaluate( function() {
                 try {
                 console.log('Scheduling earlier appointment');
-                document.querySelector('input[name=comments]').value = "Earlier appointment";
+                document.querySelector('input[name=comments]').value = "Found earlier appointment";
                 document.querySelector('input[name=Confirm]').click();
                 }
                 catch (err) {

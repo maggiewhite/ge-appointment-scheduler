@@ -10,6 +10,7 @@ from cStringIO import StringIO
 from getopt import getopt
 from argparse import ArgumentParser
 from time import sleep
+from random import random
 
 flags = {}
 
@@ -77,16 +78,18 @@ if __name__ == '__main__':
     if (flags.schedule):
         cmd.append('-s')
     while not available:
-        new_apt_str = check_output(cmd); # get string from PhantomJS script - formatted like 'Jul 20, 2015\Earlier appt available\nJuly 22, 2015'
+        new_apt_str = check_output(cmd); # get string from PhantomJS script - formatted like 'Apr 7, 2017 10:00 AM\nEarlier appt available\nApril 2, 2017 07:45 PM'
         aptStream = StringIO(new_apt_str)
-        curDate = datetime.strptime(aptStream.readline().strip(), '%b %d, %Y %H:%M')
+        curDate = datetime.strptime(aptStream.readline().strip(), '%b %d, %Y %H:%M %p')
         available = (aptStream.readline().strip() == 'Earlier appt available')
-        newDate = datetime.strptime(aptStream.readline().strip(), '%B %d, %Y %H:%M')
+        newDate = datetime.strptime(aptStream.readline().strip(), '%B %d, %Y %H:%M %p')
         new_apt_str = new_apt_str.strip()
         aptStream.close()
         if (not available):
             log('No new appointments. Next available on %s (current is on %s)' % (newDate, curDate))
             if (not flags.repeat):
                 sys.exit(0)
-            sleep(settings['period']*60)
+            sleep_interval = settings['period'] * (1.5 - random())
+            log('Sleeping for %s minutes' % sleep_interval)
+            sleep(sleep_interval * 60)
     send_apt_available_email(curDate, newDate, flags.schedule)
