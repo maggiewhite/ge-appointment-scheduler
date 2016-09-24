@@ -1,15 +1,22 @@
-# Global Entry Appointment Cancellation Checker #
+# Global Entry Appointment Scheduler #
 
 **NOTE:** If you find this tool useful, please star this project!
 
-This allows you to check and set up notifications for Global Entry enrollment appointment cancellations through the [Global Online Enrollment System website](https://goes-app.cbp.dhs.gov/). It uses [PhantomJS](http://phantomjs.org/), a headless browser, to log in and report back the first available open appointment. If one is found sooner than your current appointment, it will optionally schedule the sooner appointment and notify you via email.
+This allows you to check and set up notifications for Global Entry enrollment appointment cancellations through the [Global Online Enrollment System website](https://goes-app.cbp.dhs.gov/). It uses [PhantomJS](http://phantomjs.org/), a headless browser, to log in and report back the first available open appointment. If one is found sooner than your current appointment, it can schedule the sooner appointment.
 
-Once setup, you can check to see if there is a sooner one than already scheduled with the following commands:
+Once setup, you can run the appointment scheduler via the following commands:
 
-	phantomjs [--ssl-protocol=any] ge-cancellation-checker.phantom.js [-v | --verbose] [-s | --schedule]
-	./ge-checker-cron.py [-s | --schedule] [-r | --repeat]
+    phantomjs [--ssl-protocol=any] ge-cancellation-checker.phantom.js [-v | --verbose] [-s | --schedule]
+    ./ge-checker-cron.py [-s | --schedule] [-r | --repeat]
 
-You can also schedule appointments by adding [-s | --schedule] to either command. NOTE: The phantom.js command will only write to a log file/the console. It will not notify you via email that your appointment has been updated.
+You can schedule appointments by adding '-s' or '--schedule' to either command. NOTE: The phantom.js command will only write to a log file/the console. Email is not currently functional.
+
+    ./ge-checker-cron.py -s
+
+If you'd like to be notified of cancellations regularly, you can run the command with the [-r | --repeat] argument. The following runs every half hour:
+
+    ./ge-checker-cron.py -r &
+    tail -f <logfile_name> &
 
 ## Setup ##
 
@@ -35,7 +42,7 @@ To get started, copy `config.json.example` to `config.json`. In your new config,
 
 * **email_from**: the "from" address for the notification email
 
-* **email_to**: a list of addresses to send the notifiation email to (must be an array)
+* **email_to**: a list of addresses to send the notification email to (must be an array)
 
 * **period**: minutes between periodic checks for new appointments
 
@@ -50,15 +57,6 @@ To get started, copy `config.json.example` to `config.json`. In your new config,
 * **init_url**: the login page of the GOES website.
 
 Please also ensure you are the only one with access to your `config.json` to protect your username and password.
-
-### Scheduling ###
-
-If you'd like to be notified of cancellations regularly, you can run the command with the [-r | --repeat] argument. The following runs every half hour:
-
-    ./ge-checker-cron.py -r &
-    tail -f <logfile_name> &
-
-Of course, please make sure that [SendMail is working](http://smallbusiness.chron.com/check-sendmail-working-not-linux-49904.html) before trusting this to notify you. If you want to keep a record, be sure to set a logfile path in your `config.json`.
 
 ## Contribution ##
 
