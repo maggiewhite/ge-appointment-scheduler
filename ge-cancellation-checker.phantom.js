@@ -156,8 +156,9 @@ var steps = [
             // Current date XXX: clean up this search
             console.log("Get the earliest reschedule date...");
             try {
-            date = document.querySelector(".maincontainer p:nth-child(7)").innerHTML.replace(/<strong>[\s\S]*?<\/strong>/, "");
-            date += " " + document.querySelector(".maincontainer p:nth-child(8)").innerHTML.replace(/<strong>[\s\S]*?<\/strong>/, "");
+            // TODO: make this less fragile, search by "Interview Date: " not spot in table
+            date = document.querySelector(".maincontainer p:nth-child(6)").innerHTML.replace(/<strong>[\s\S]*?<\/strong>/, "");
+            date += " " + document.querySelector(".maincontainer p:nth-child(7)").innerHTML.replace(/<strong>[\s\S]*?<\/strong>/, "");
             window.callPhantom('curDate', date);
             console.log('Current date found: ' + date);
             document.querySelector('input[name=reschedule]').click();
@@ -172,7 +173,7 @@ var steps = [
         page.evaluate(function() {
                 console.log('Selecting enrollment center ' + window.callPhantom('enrollment_location_id'));
                 try {
-                document.querySelector('select[name=selectedEnrollmentCenter]').value = window.callPhantom('enrollment_location_id');
+                document.querySelector('[value="' + window.callPhantom('enrollment_location_id') + '"]').click();
                 document.querySelector('input[name=next]').click();
                 }
                 catch (err) {
