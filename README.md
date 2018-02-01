@@ -1,6 +1,6 @@
 # Global Entry Appointment Scheduler #
 
-**NOTE:** If you find this tool useful, please star this project!
+**DEPRECATED:** The global entry website has completely changed its front end and uses 2 factor authentication now. This tool is currently non-functional, and I won't be able to test it again for another ~3 years. If you're willing to share your login for testing purposes, I would be very interested in updating this for the new website.
 
 This allows you to check and set up notifications for Global Entry enrollment appointment cancellations through the [Global Online Enrollment System website](https://goes-app.cbp.dhs.gov/). It uses [PhantomJS](http://phantomjs.org/), a headless browser, to log in and report back the first available open appointment. If one is found sooner than your current appointment, it can schedule the sooner appointment.
 
